@@ -66,7 +66,7 @@ The plugin generates **BlogPosting** schema type, including:
 ## Changelog
 
 ### 1.1
-- Updated version for better compatibility with WordPress 6.x.
+- Updated version for better compatibility with WordPress 6.7.
 - Minor fixes to the description handling.
 
 ### 1.0
