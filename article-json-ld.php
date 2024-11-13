@@ -13,7 +13,6 @@
  */
 
 // Hook into the post save action to update the custom field
-
 add_action('save_post', 'add_json_ld_to_custom_field', 10, 3);
 
 function add_json_ld_to_custom_field($post_id, $post, $update) {
@@ -84,4 +83,21 @@ function add_json_ld_to_custom_field($post_id, $post, $update) {
     // Save the custom field to post meta
     update_post_meta($post_id, 'article-JSON-LD', $json_ld);
 }
+
+// Add JSON-LD to the <head> section of the post
+function add_article_json_ld_to_head() {
+    if (is_single()) { // Only run on single posts
+        // Retrieve the 'article-JSON-LD' custom field
+        $json_ld = get_post_meta(get_the_ID(), 'article-JSON-LD', true);
+        
+        // If JSON-LD exists, insert it into the head section
+        if ($json_ld) {
+            echo '
+            <script type="application/ld+json">' . $json_ld . '</script>
+            ';
+        }
+    }
+}
+add_action('wp_head', 'add_article_json_ld_to_head');
+
 
