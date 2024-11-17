@@ -54,10 +54,17 @@ function add_json_ld_to_custom_field($post_id, $post, $update) {
 
         // Normalize the description to avoid any unwanted characters (e.g., converting `’` to `'`)
         $post_description = str_replace(["\u2019", "’"], "'", $post_description);  // Replace Unicode apostrophe and curly quotes
-        
+
         // Sanitize the description again before saving to ensure safety
         $meta_description = htmlspecialchars($post_description, ENT_NOQUOTES, 'UTF-8');  // Only encode special chars except quotes
     }
+
+    // Sanitize title and description for JSON-LD compatibility (escape quotes and special chars)
+    $post_title = sanitize_text_field($post_title);  // Sanitize title for output
+    $meta_description = sanitize_textarea_field($meta_description); // Sanitize description
+
+    // Manually escape any double quotes in the description (for valid JSON)
+    $meta_description = str_replace('"', '\"', $meta_description);
 
     // Construct the JSON-LD data
     $json_ld_data = array(
@@ -65,7 +72,10 @@ function add_json_ld_to_custom_field($post_id, $post, $update) {
         "@type" => "BlogPosting",
         "headline" => $post_title,
         "image" => $featured_image_url,
-        "publisher" => get_bloginfo('name'),
+        "publisher" => array(
+            "@type" => "Organization",  // Publisher is now an Organization
+            "name" => get_bloginfo('name'),  // The organization name
+        ),
         "url" => $post_url,
         "datePublished" => $post_date,
         "dateCreated" => $post_date,
@@ -77,8 +87,8 @@ function add_json_ld_to_custom_field($post_id, $post, $update) {
         ),
     );
 
-    // Encode the data to JSON
-    $json_ld = json_encode($json_ld_data, JSON_PRETTY_PRINT);
+    // Encode the data to JSON (this handles escaping any characters that could break JSON)
+    $json_ld = json_encode($json_ld_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
     // Save the custom field to post meta
     update_post_meta($post_id, 'article-JSON-LD', $json_ld);
@@ -89,7 +99,7 @@ function add_article_json_ld_to_head() {
     if (is_single()) { // Only run on single posts
         // Retrieve the 'article-JSON-LD' custom field
         $json_ld = get_post_meta(get_the_ID(), 'article-JSON-LD', true);
-        
+
         // If JSON-LD exists, insert it into the head section
         if ($json_ld) {
             echo '
@@ -99,5 +109,4 @@ function add_article_json_ld_to_head() {
     }
 }
 add_action('wp_head', 'add_article_json_ld_to_head');
-
 
